@@ -1,0 +1,19 @@
+{
+  "name": "gcn-opportunity-crawler",
+  "version": "1.0.0",
+  "description": "Crawler for collecting information about volunteer opportunties",
+  "main": "index.js",
+  "scripts": {
+    "test": "npm run test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sayingandparsing/gcn-opportunity-crawler.git"
+  },
+  "author": "Reagan Mitchell",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/sayingandparsing/gcn-opportunity-crawler/issues"
+  },
+  "homepage": "https://github.com/sayingandparsing/gcn-opportunity-crawler#readme"
+}
