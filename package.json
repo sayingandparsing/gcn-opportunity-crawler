@@ -15,5 +15,16 @@
   "bugs": {
     "url": "https://github.com/sayingandparsing/gcn-opportunity-crawler/issues"
   },
-  "homepage": "https://github.com/sayingandparsing/gcn-opportunity-crawler#readme"
+  "homepage": "https://github.com/sayingandparsing/gcn-opportunity-crawler#readme",
+  "dependencies": {
+    "@types/cheerio": "^0.22.7",
+    "@types/request": "^2.47.0",
+    "@types/request-promise": "^4.1.41",
+    "@types/sanctuary": "^0.14.2",
+    "cheerio": "^1.0.0-rc.2",
+    "rambda": "^1.1.1",
+    "request": "^2.85.0",
+    "request-promise": "^4.2.2",
+    "sanctuary": "^0.14.1"
+  }
 }
