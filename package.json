@@ -23,7 +23,7 @@
     "@types/sanctuary": "^0.14.2",
     "cheerio": "^1.0.0-rc.2",
     "rambda": "^1.1.1",
-    "request": "^2.85.0",
+    "request": "^2.86.0",
     "request-promise": "^4.2.2",
     "sanctuary": "^0.14.1"
   }

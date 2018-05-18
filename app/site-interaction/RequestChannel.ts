@@ -1,6 +1,8 @@
 
-import $ from 'cheerio'
-import rp from 'request-promise'
+import * as cheerio from 'cheerio'
+import * as rp from 'request-promise'
+import {RequestPromiseOptions} from 'request-promise'
+//import UrlOptions from 'request'
 //import {Maybe, Just} from 'sanctuary'
 
 
@@ -10,9 +12,9 @@ import rp from 'request-promise'
  */
 export class RequestChannel {
 
-    baseUrl :String
+    baseUrl: string
     
-    constructor(baseUrl :String) {
+    constructor(baseUrl ?:string) {
         this.baseUrl = baseUrl
     }
 
@@ -23,30 +25,30 @@ export class RequestChannel {
      * @param options 
      * @param onFail 
      */
-    async fetchPage(uri      :String, 
-                    callback :Callable<String,Any>,
-                    options? :Object,
-                    onFail?)
-                    :Promise<String|null> {
-
-        return await rp({
-            uri: this.specify(uri),
-            ...options
-        })
-            .then(res => callback(res))
+    async fetchPage(url      :string, 
+                    callback :(String)=>void,
+                    options? :RequestPromiseOptions,
+                    onFail?  :(ExceptionInformation)=>void) {
+        return await rp(
+            options
+                ? {url: url, ...options}
+                : {url: url}
+        )
+            /*.then(res => {callback(res)})
             .catch(err =>
                 onFail 
                     ? onFail(err) 
-                    : this.logFailure(err))
+                    : this.logFailure(err))*/
     }
   
 
-    const specify = (uri :String) :String =>
+    specify = (uri :string) :string =>
         this.baseUrl + '/' + uri
 
 
     logFailure(err) {
-
+        console.log('erred')
+        console.log(err); 
     }
 
     /**
