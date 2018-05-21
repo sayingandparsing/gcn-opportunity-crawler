@@ -5,6 +5,7 @@ import {
         } from "../../types/ExtractedData";
 import { RequestChannel } from "../../site-interaction/RequestChannel";
 import * as cheerio from "cheerio"
+import * as fs from "fs"
 
 
 
@@ -14,12 +15,13 @@ import * as cheerio from "cheerio"
 }*/
 
 export class HabitatResult implements EventOpportunity {
-    org :String = "Habitat For Humanity Austin"
-    title :String
-    description :String = ""
+    org :string = "Habitat For Humanity Austin"
+    title :string
+    description :string = ""
+    longDescription :string = ""
     location :Location = null
-    date :String = ""
-    time :String = ""
+    date :string = ""
+    time :string = ""
 
     results :HabitatResult[] = new Array
 
@@ -31,11 +33,8 @@ export class HabitatResult implements EventOpportunity {
 export class HabitatScraper {
 
     searchPage = 'https://austinhabitat.volunteerhub.com'
-
     requesting = new RequestChannel()
-
     results :HabitatResult[] = new Array()
-
     delay = 0.5
 
     constructor() {
@@ -57,10 +56,10 @@ export class HabitatScraper {
         dayBlocks.each((i, elem) => {
             $(elem).find('.row.mx-sm-0').each((i, listing) => {
                 const res = this.processListing(listing, $)
+                console.log(this.results.length)
                 this.results.push(res)
             })
         })
-        this.CSV.prototype.toCsv(this.results, "")
     }
 
     processListing(listing :CheerioElement, 
@@ -69,11 +68,12 @@ export class HabitatScraper {
         const [date, time] = this.getDateTime(listing, $)
         const address = $(listing).find('.fa-map-marker')
                                   .next().first().text().trim()
-        const description = "test"
+        const description = this.getDescription(listing, $)
         const res = new HabitatResult(title)
         res.date = date
         res.time = time
         res.location = {address: address, city: "Austin", country: "US"}
+        res.description = description
         return res
 
     }
@@ -87,8 +87,13 @@ export class HabitatScraper {
                              .join(', ')
         const time = dateTime.split(',')
                              .map(x=>x.trim())[2]
-        console.log(time)
         return [date, time]
+    }
+
+    getDescription(listing :CheerioElement,
+                   $ :CheerioStatic) :string {
+        const desc = $(listing).find('div .tinyMceContent').find('p').first().text().trim()
+        return desc
     }
 
 
@@ -101,33 +106,34 @@ export class HabitatScraper {
      */
     CSV = class {
 
-        header = [
-            "Title",
-            "Date",
-            "Time",
-            "Location",
-            "Description"
-        ]
+        header() {
+            return '"' + [
+                "Title",
+                "Date",
+                "Time",
+                "Location",
+                "Description"
+            ].join('", "') + '"'
+        } 
 
-        toCsv(results :HabitatResult[], path :String) {
-            type Row = String
+        toCsv(results :HabitatResult[], path :string) {
+            type Row = string
             const rows :Row[] = results.map(res => 
                 this.arrayToRow(
                     this.resToArray(res)
                 )
             )
-            const rowsWithHead = [this.header, ...rows]
+            const rowsWithHead = [this.header(), ...rows]
             const content = rowsWithHead.join("\n")
-            console.log(content)
-            //this.writeToFile(content, path)
+            this.writeToFile(content, path)
         }
 
-        writeToFile(content :String, path :String) {
-
+        writeToFile(content :string, path :string) {
+            fs.writeFile(path, content, (err) => console.log(err))
         }
 
 
-        resToArray(res :HabitatResult) :String[] {
+        resToArray(res :HabitatResult) :string[] {
             return [
                 res.title,
                 res.date,
@@ -141,7 +147,7 @@ export class HabitatScraper {
             })
         }
 
-        locationToArray(loc :Location) :String[] {
+        locationToArray(loc :Location) :string[] {
             return [
                 loc.address,
                 loc.city
@@ -151,7 +157,7 @@ export class HabitatScraper {
             })
         }
 
-        arrayToRow(elems :String[]) :String {
+        arrayToRow(elems :string[]) :string {
             return '"' + elems.join('", "') + '"'
         }
 
@@ -161,6 +167,10 @@ export class HabitatScraper {
 }
 console.log('starting')
 
-const h = new HabitatScraper()
-h.process(h.searchPage)
-
+async function run() {
+    const h = new HabitatScraper()
+    await h.process(h.searchPage)
+    console.log(h.results.length)
+    h.CSV.prototype.toCsv(h.results, '/home/reagan/Downloads/habitat_austin_may18.csv')
+}
+run()

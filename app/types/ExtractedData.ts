@@ -1,6 +1,6 @@
 
 
-export type OrgRef = String 
+export type OrgRef = string 
                    | Organization
 
 
@@ -12,26 +12,26 @@ export type Location = AnyLoc
                      | USLocation
 
 export interface Opportunity {
-    title        :String
+    title        :string
     org          :Organization
-    description? :String
+    description? :string
     location?    :Location
 }
 
 export interface EventOpportunity
             extends Opportunity {
-    date  :String
-    time? :String
+    date  :string
+    time? :string
 }
 
 export interface AnyLoc {
-    address? :String
-    city?    :String
-    country  :String
+    address? :string
+    city?    :string
+    country  :string
 }
 
 export interface USLocation 
         extends AnyLoc {
-    state :String
-    zip?  :String
+    state :string
+    zip?  :string
 }

@@ -37,6 +37,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
 Object.defineProperty(exports, "__esModule", { value: true });
 var RequestChannel_1 = require("../../site-interaction/RequestChannel");
 var cheerio = require("cheerio");
+var fs = require("fs");
 /*export interface HabitatResult
             extends EventOpportunity {
 
@@ -45,6 +46,7 @@ var HabitatResult = /** @class */ (function () {
     function HabitatResult(title) {
         this.org = "Habitat For Humanity Austin";
         this.description = "";
+        this.longDescription = "";
         this.location = null;
         this.date = "";
         this.time = "";
@@ -68,25 +70,28 @@ var HabitatScraper = /** @class */ (function () {
          */
         this.CSV = /** @class */ (function () {
             function class_1() {
-                this.header = [
+            }
+            class_1.prototype.header = function () {
+                return '"' + [
                     "Title",
                     "Date",
                     "Time",
                     "Location",
                     "Description"
-                ];
-            }
+                ].join('", "') + '"';
+            };
             class_1.prototype.toCsv = function (results, path) {
                 var _this = this;
                 var rows = results.map(function (res) {
                     return _this.arrayToRow(_this.resToArray(res));
                 });
-                var rowsWithHead = [this.header].concat(rows);
+                console.log(this.header());
+                var rowsWithHead = [this.header()].concat(rows);
                 var content = rowsWithHead.join("\n");
-                console.log(content);
-                //this.writeToFile(content, path)
+                this.writeToFile(content, path);
             };
             class_1.prototype.writeToFile = function (content, path) {
+                fs.writeFile(path, content, function (err) { return console.log(err); });
             };
             class_1.prototype.resToArray = function (res) {
                 return [
@@ -138,21 +143,22 @@ var HabitatScraper = /** @class */ (function () {
         dayBlocks.each(function (i, elem) {
             $(elem).find('.row.mx-sm-0').each(function (i, listing) {
                 var res = _this.processListing(listing, $);
+                console.log(_this.results.length);
                 _this.results.push(res);
             });
         });
-        this.CSV.prototype.toCsv(this.results, "");
     };
     HabitatScraper.prototype.processListing = function (listing, $) {
         var title = $(listing).find('a').first().text().trim();
         var _a = this.getDateTime(listing, $), date = _a[0], time = _a[1];
         var address = $(listing).find('.fa-map-marker')
             .next().first().text().trim();
-        var description = "test";
+        var description = this.getDescription(listing, $);
         var res = new HabitatResult(title);
         res.date = date;
         res.time = time;
         res.location = { address: address, city: "Austin", country: "US" };
+        res.description = description;
         return res;
     };
     HabitatScraper.prototype.getDateTime = function (listing, $) {
@@ -163,13 +169,32 @@ var HabitatScraper = /** @class */ (function () {
             .join(', ');
         var time = dateTime.split(',')
             .map(function (x) { return x.trim(); })[2];
-        console.log(time);
         return [date, time];
+    };
+    HabitatScraper.prototype.getDescription = function (listing, $) {
+        var desc = $(listing).find('div .tinyMceContent').find('p').first().text().trim();
+        return desc;
     };
     return HabitatScraper;
 }());
 exports.HabitatScraper = HabitatScraper;
 console.log('starting');
-var h = new HabitatScraper();
-h.process(h.searchPage);
+function run() {
+    return __awaiter(this, void 0, void 0, function () {
+        var h;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0:
+                    h = new HabitatScraper();
+                    return [4 /*yield*/, h.process(h.searchPage)];
+                case 1:
+                    _a.sent();
+                    console.log(h.results.length);
+                    h.CSV.prototype.toCsv(h.results, '/home/reagan/Downloads/habitat_austin_may18.csv');
+                    return [2 /*return*/];
+            }
+        });
+    });
+}
+run();
 //# sourceMappingURL=HabitatScraper.js.map
