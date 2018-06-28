@@ -5,7 +5,9 @@ export type OrgRef = string
 
 
 export interface Organization {
-
+    name :string
+    branch? :string
+    affiliations? :string[]
 }
 
 export type Location = AnyLoc
@@ -13,7 +15,7 @@ export type Location = AnyLoc
 
 export interface Opportunity {
     title        :string
-    org          :Organization
+    org          :OrgRef
     description? :string
     location?    :Location
 }
@@ -21,7 +23,9 @@ export interface Opportunity {
 export interface EventOpportunity
             extends Opportunity {
     date  :string
+    dateEnd? :string
     time? :string
+    timeEnd? :string
 }
 
 export interface AnyLoc {

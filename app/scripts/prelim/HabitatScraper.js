@@ -38,27 +38,10 @@ Object.defineProperty(exports, "__esModule", { value: true });
 var RequestChannel_1 = require("../../site-interaction/RequestChannel");
 var cheerio = require("cheerio");
 var fs = require("fs");
-/*export interface HabitatResult
-            extends EventOpportunity {
-
-}*/
-var HabitatResult = /** @class */ (function () {
-    function HabitatResult(title) {
-        this.org = "Habitat For Humanity Austin";
-        this.description = "";
-        this.longDescription = "";
-        this.location = null;
-        this.date = "";
-        this.time = "";
-        this.results = new Array;
-        this.title = title;
-    }
-    return HabitatResult;
-}());
-exports.HabitatResult = HabitatResult;
 var HabitatScraper = /** @class */ (function () {
     function HabitatScraper() {
         this.searchPage = 'https://austinhabitat.volunteerhub.com';
+        this.org = 'Habitat for Humanity Austin';
         this.requesting = new RequestChannel_1.RequestChannel();
         this.results = new Array();
         this.delay = 0.5;
@@ -85,7 +68,6 @@ var HabitatScraper = /** @class */ (function () {
                 var rows = results.map(function (res) {
                     return _this.arrayToRow(_this.resToArray(res));
                 });
-                console.log(this.header());
                 var rowsWithHead = [this.header()].concat(rows);
                 var content = rowsWithHead.join("\n");
                 this.writeToFile(content, path);
@@ -143,32 +125,37 @@ var HabitatScraper = /** @class */ (function () {
         dayBlocks.each(function (i, elem) {
             $(elem).find('.row.mx-sm-0').each(function (i, listing) {
                 var res = _this.processListing(listing, $);
-                console.log(_this.results.length);
+                console.log(res);
                 _this.results.push(res);
             });
         });
     };
     HabitatScraper.prototype.processListing = function (listing, $) {
-        var title = $(listing).find('a').first().text().trim();
         var _a = this.getDateTime(listing, $), date = _a[0], time = _a[1];
+        var titleElem = $(listing).find('a').first();
         var address = $(listing).find('.fa-map-marker')
             .next().first().text().trim();
-        var description = this.getDescription(listing, $);
-        var res = new HabitatResult(title);
-        res.date = date;
-        res.time = time;
-        res.location = { address: address, city: "Austin", country: "US" };
-        res.description = description;
-        return res;
+        console.log(address);
+        return {
+            link: this.searchPage + titleElem.attr('href'),
+            title: titleElem.text().trim(),
+            description: this.getDescription(listing, $),
+            longDescription: '',
+            date: date,
+            time: time,
+            location: { address: address, city: "Austin", country: "US" },
+            org: this.org
+        };
     };
     HabitatScraper.prototype.getDateTime = function (listing, $) {
         var dateTime = $(listing).find('.fa-clock-o').next().first().text().trim();
-        var date = dateTime.split(',')
+        var date = dateTime.split('\n\t\t\t')
             .map(function (x) { return x.trim(); })
-            .splice(0, 2)
+            .splice(0, 1)
             .join(', ');
-        var time = dateTime.split(',')
-            .map(function (x) { return x.trim(); })[2];
+        var time = dateTime.split('\n\t\t\t')
+            .map(function (x) { return x.trim(); }).splice(1)
+            .join(' ');
         return [date, time];
     };
     HabitatScraper.prototype.getDescription = function (listing, $) {
@@ -189,8 +176,8 @@ function run() {
                     return [4 /*yield*/, h.process(h.searchPage)];
                 case 1:
                     _a.sent();
-                    console.log(h.results.length);
-                    h.CSV.prototype.toCsv(h.results, '/home/reagan/Downloads/habitat_austin_may18.csv');
+                    console.log(h.results);
+                    fs.writeFile('/home/reagan/Downloads/habitat_austin_may18.csv', JSON.stringify(h.results), function (err) { return console.log(err); });
                     return [2 /*return*/];
             }
         });

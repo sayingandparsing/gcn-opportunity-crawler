@@ -1,7 +1,8 @@
 import { 
     Opportunity, 
     EventOpportunity,
-    Location
+    Location,
+    OrgRef
         } from "../../types/ExtractedData";
 import { RequestChannel } from "../../site-interaction/RequestChannel";
 import * as cheerio from "cheerio"
@@ -14,25 +15,24 @@ import * as fs from "fs"
 
 }*/
 
-export class HabitatResult implements EventOpportunity {
-    org :string = "Habitat For Humanity Austin"
-    title :string
-    description :string = ""
-    longDescription :string = ""
-    location :Location = null
-    date :string = ""
-    time :string = ""
-
-    results :HabitatResult[] = new Array
-
-    constructor(title) {
-        this.title = title     
-    }
+export interface HabitatResult 
+            extends EventOpportunity {
+    org             :string
+    title           :string
+    description     :string
+    longDescription :string
+    location        :Location
+    date            :string
+    time            :string
+    link            :string
 }
+
+
 
 export class HabitatScraper {
 
     searchPage = 'https://austinhabitat.volunteerhub.com'
+    org = 'Habitat for Humanity Austin'
     requesting = new RequestChannel()
     results :HabitatResult[] = new Array()
     delay = 0.5
@@ -56,37 +56,42 @@ export class HabitatScraper {
         dayBlocks.each((i, elem) => {
             $(elem).find('.row.mx-sm-0').each((i, listing) => {
                 const res = this.processListing(listing, $)
-                console.log(this.results.length)
+                console.log(res)
                 this.results.push(res)
             })
         })
     }
 
     processListing(listing :CheerioElement, 
-                   $ :CheerioStatic) :HabitatResult {
-        const title = $(listing).find('a').first().text().trim()
-        const [date, time] = this.getDateTime(listing, $)
+                   $ :CheerioStatic
+                  ) :HabitatResult {
+        const [date, time] = this.getDateTime(listing, $)     
+        const titleElem = $(listing).find('a').first()
         const address = $(listing).find('.fa-map-marker')
                                   .next().first().text().trim()
-        const description = this.getDescription(listing, $)
-        const res = new HabitatResult(title)
-        res.date = date
-        res.time = time
-        res.location = {address: address, city: "Austin", country: "US"}
-        res.description = description
-        return res
-
+        console.log(address)
+        return {
+            link: this.searchPage + titleElem.attr('href'),
+            title: titleElem.text().trim(),
+            description: this.getDescription(listing, $),
+            longDescription: '',
+            date: date,
+            time: time,
+            location: {address: address, city: "Austin", country: "US"},
+            org: this.org
+        }
     }
 
     getDateTime(listing :CheerioElement,
                 $ :CheerioStatic) {
         const dateTime = $(listing).find('.fa-clock-o').next().first().text().trim()
-        const date = dateTime.split(',')
+        const date = dateTime.split('\n\t\t\t')
                              .map(x=>x.trim())
-                             .splice(0, 2)
+                             .splice(0, 1)
                              .join(', ')
-        const time = dateTime.split(',')
-                             .map(x=>x.trim())[2]
+        const time = dateTime.split('\n\t\t\t')
+                             .map(x=>x.trim()).splice(1)
+                             .join(' ')
         return [date, time]
     }
 
@@ -170,7 +175,9 @@ console.log('starting')
 async function run() {
     const h = new HabitatScraper()
     await h.process(h.searchPage)
-    console.log(h.results.length)
-    h.CSV.prototype.toCsv(h.results, '/home/reagan/Downloads/habitat_austin_may18.csv')
+    console.log(h.results)
+    fs.writeFile('/home/reagan/Downloads/habitat_austin_may18.csv',
+                JSON.stringify(h.results),
+                (err) => console.log(err))
 }
 run()
